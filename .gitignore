@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+checkpoints/*.pt
+checkpoints/history.json
+uploads/*
+!uploads/.gitkeep
+sample_dataset/
+.venv/
+*.log
