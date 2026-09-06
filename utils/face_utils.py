@@ -7,10 +7,16 @@ print("CV2 LOCATION:", cv2.__file__)
 print("CV2 VERSION:", getattr(cv2, "__version__", "unknown"))
 print("HAS CASCADE:", hasattr(cv2, "CascadeClassifier"))
 
-BASE_DIR = Path(__file__).resolve().parent.parent
-CASCADE_PATH = BASE_DIR / "haarcascade_frontalface_default.xml"
+CASCADE_PATH = Path(
+    cv2.data.haarcascades
+) / "haarcascade_frontalface_default.xml"
 
 _face_detector = cv2.CascadeClassifier(str(CASCADE_PATH))
+
+if _face_detector.empty():
+    raise RuntimeError(
+        f"Could not load Haar Cascade: {CASCADE_PATH}"
+    )
 
 if _face_detector.empty():
     raise RuntimeError(f"Could not load Haar Cascade: {CASCADE_PATH}")
