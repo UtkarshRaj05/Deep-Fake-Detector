@@ -24,10 +24,12 @@ class DeepfakeInference:
         self.model = DeepfakeDetector(num_classes=config.NUM_CLASSES, pretrained=False).to(self.device)
 
         self.checkpoint_loaded = False
-        if os.path.exists(checkpoint_path):
-            ckpt = torch.load(checkpoint_path, map_location=self.device)
-            self.model.load_state_dict(ckpt["model_state"])
-            self.checkpoint_loaded = True
+        if not os.path.exists(checkpoint_path):
+            raise FileNotFoundError(f"Model checkpoint not found: {checkpoint_path}")
+
+        ckpt = torch.load(checkpoint_path, map_location=self.device)
+        self.model.load_state_dict(ckpt["model_state"])
+        self.checkpoint_loaded = True
 
         self.model.eval()
         self.transform = build_transforms(config.IMAGE_SIZE, train=False)
