@@ -11,20 +11,6 @@ _face_detector = cv2.CascadeClassifier(str(CASCADE_PATH))
 
 if _face_detector.empty():
     raise RuntimeError(f"Could not load Haar Cascade: {CASCADE_PATH}")
-# Get the directory where face_utils.py exists
-BASE_DIR = Path(__file__).resolve().parent
-
-# Path to Haar Cascade XML file
-CASCADE_PATH = BASE_DIR / "haarcascade_frontalface_default.xml"
-
-# Load face detector
-_face_detector = cv2.CascadeClassifier(str(CASCADE_PATH))
-
-
-if _face_detector.empty():
-    raise RuntimeError(
-        f"Could not load Haar Cascade file: {CASCADE_PATH}"
-    )
 
 
 def detect_largest_face(image_bgr: np.ndarray):
