@@ -1,8 +1,11 @@
 from pathlib import Path
-import cv2
 import numpy as np
 from PIL import Image
+import cv2
 
+print("CV2 LOCATION:", cv2.__file__)
+print("CV2 VERSION:", getattr(cv2, "__version__", "unknown"))
+print("HAS CASCADE:", hasattr(cv2, "CascadeClassifier"))
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 CASCADE_PATH = BASE_DIR / "haarcascade_frontalface_default.xml"
