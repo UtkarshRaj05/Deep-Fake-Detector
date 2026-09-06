@@ -4,6 +4,13 @@ import numpy as np
 from PIL import Image
 
 
+BASE_DIR = Path(__file__).resolve().parent.parent
+CASCADE_PATH = BASE_DIR / "haarcascade_frontalface_default.xml"
+
+_face_detector = cv2.CascadeClassifier(str(CASCADE_PATH))
+
+if _face_detector.empty():
+    raise RuntimeError(f"Could not load Haar Cascade: {CASCADE_PATH}")
 # Get the directory where face_utils.py exists
 BASE_DIR = Path(__file__).resolve().parent
 
