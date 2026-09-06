@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DeepFake — Image Authenticity Analysis</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+  <div class="grain"></div>
+
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <div class="wordmark">
+        <span class="wordmark-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="20" height="20">
+            <circle cx="12" cy="12" r="7.5" fill="none" stroke="currentColor" stroke-width="1.4" />
+            <circle cx="12" cy="12" r="2.2" fill="currentColor" />
+          </svg>
+        </span>
+        DeepFake
+      </div>
+      <div class="header-meta">
+        Image authenticity analysis
+        {% if not checkpoint_loaded %}
+        <span class="model-flag">untrained model</span>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+
+    {% if not checkpoint_loaded %}
+    <div class="notice">
+      No trained checkpoint found at <code>checkpoints/best_model.pt</code>. This instance is running
+      on an untrained backbone, so verdicts below are placeholder output, not real detections.
+      Run <code>python create_sample_data.py</code> then <code>python train.py</code>, or point
+      <code>config.DATASET_DIR</code> at a real labeled dataset and retrain.
+    </div>
+    {% endif %}
+
+    <section class="intro">
+      <h1>Look closer at the image<br>before you trust it.</h1>
+      <p class="intro-copy">
+        Upload a photo and Aperture examines it for the texture and blending artifacts
+        common in AI-manipulated faces — then shows you exactly where it looked.
+      </p>
+    </section>
+
+    <section class="console">
+
+      <div id="dropzone" class="dropzone">
+        <input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp,image/bmp" hidden>
+        <div class="dropzone-inner">
+          <svg viewBox="0 0 48 48" width="34" height="34" class="dropzone-icon">
+            <path d="M24 6 L24 30 M24 6 L14 16 M24 6 L34 16" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M8 32 L8 38 Q8 40 10 40 L38 40 Q40 40 40 38 L40 32" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          <p class="dropzone-title">Drop an image, or click to browse</p>
+          <p class="dropzone-sub">JPG, PNG, WEBP, or BMP — up to 12&nbsp;MB</p>
+        </div>
+      </div>
+
+      <div id="loadingState" class="loading-state" hidden>
+        <div class="scan-bar">
+          <div class="scan-bar-fill"></div>
+        </div>
+        <p id="loadingLabel">Analyzing image…</p>
+      </div>
+
+      <div id="errorState" class="error-state" hidden></div>
+
+      <div id="resultState" class="result" hidden>
+
+        <div class="result-grid">
+
+          <div class="specimen-panel">
+            <div class="specimen-frame">
+              <img id="specimenImage" alt="Analyzed image">
+            </div>
+            <div class="specimen-toggle">
+              <button type="button" class="toggle-btn active" data-view="original">Original</button>
+              <button type="button" class="toggle-btn" data-view="heatmap">Attention map</button>
+            </div>
+            <p class="specimen-note" id="faceNote"></p>
+          </div>
+
+          <div class="verdict-panel">
+            <div class="verdict-eyebrow">Verdict</div>
+            <div id="verdictLabel" class="verdict-label">—</div>
+
+            <div class="gauge-row">
+              <svg viewBox="0 0 140 80" class="gauge">
+                <path d="M 10 70 A 60 60 0 0 1 130 70" fill="none" stroke="var(--line)" stroke-width="10"
+                  stroke-linecap="round" />
+                <path id="gaugeArc" d="M 10 70 A 60 60 0 0 1 130 70" fill="none" stroke="var(--ink)" stroke-width="10"
+                  stroke-linecap="round" stroke-dasharray="188.5" stroke-dashoffset="188.5" />
+              </svg>
+              <div class="gauge-readout">
+                <span id="confidenceValue" class="confidence-value">0%</span>
+                <span class="confidence-label">confidence</span>
+              </div>
+            </div>
+
+            <dl class="metrics">
+              <div class="metric-row">
+                <dt>Real probability</dt>
+                <dd id="realProb">—</dd>
+              </div>
+              <div class="metric-row">
+                <dt>Fake probability</dt>
+                <dd id="fakeProb">—</dd>
+              </div>
+              <div class="metric-row">
+                <dt>Face detected</dt>
+                <dd id="faceDetected">—</dd>
+              </div>
+            </dl>
+
+            <button type="button" id="resetBtn" class="reset-btn">Analyze another image</button>
+          </div>
+
+        </div>
+      </div>
+
+    </section>
+
+    <section class="how">
+      <h2>How this works</h2>
+      <div class="how-grid">
+        <div class="how-item">
+          <span class="how-num">1</span>
+          <h3>Locate the face</h3>
+          <p>The system detects the largest face in the frame and crops in with margin, since manipulation artifacts
+            concentrate around facial features.</p>
+        </div>
+        <div class="how-item">
+          <span class="how-num">2</span>
+          <h3>Classify the texture</h3>
+          <p>A convolutional network trained on real and manipulated faces scores the crop for the subtle blending
+            seams, warping, and noise inconsistencies that betray synthetic content.</p>
+        </div>
+        <div class="how-item">
+          <span class="how-num">3</span>
+          <h3>Show the evidence</h3>
+          <p>An attention map (Grad-CAM) highlights exactly which regions drove the verdict, so the score isn't a black
+            box.</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="disclaimer">
+      No detector is perfect, and confident-looking output can still be wrong — treat this as one input
+      among several when the stakes are high, not a final verdict.
+    </div>
+    <div class="disclaimer">
+      Developed By Utkarsh
+    </div>
+
+  </main>
+
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+
+</html>
