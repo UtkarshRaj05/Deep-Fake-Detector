@@ -4,4 +4,4 @@ Flask>=3.0
 Pillow>=10.0
 numpy>=1.24
 Werkzeug>=3.0
-opencv-python-headless
+opencv-python-headless==4.10.0.84
