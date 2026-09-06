@@ -9,7 +9,10 @@ Then open http://localhost:5000
 import os
 import base64
 from io import BytesIO
+import streamlit as st
+from inference import DeepfakeInference
 
+# Streamlit UI here
 from flask import Flask, render_template, request, jsonify
 from PIL import Image
 from werkzeug.utils import secure_filename
@@ -66,4 +69,4 @@ def analyze():
 
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    app.run(debug=False, host="0.0.0.0", port=5000, use_reloader=False)
